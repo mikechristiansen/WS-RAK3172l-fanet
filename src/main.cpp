@@ -115,12 +115,14 @@ void loop() {
         FANET::ServicePayload payload;
         payload.latitude(47.397742)
                .longitude(8.545594)
-               .temperature(20.0f)
-               .windHeading(270.0f)
-               .windSpeed(10.0f)
-               .windGust(15.0f)
-               .humidity(65.0f)
-               .barometric(1013.0f);
+               .temperature(20.0)
+               .windHeading(270.0)
+               .windSpeed(10.0)
+               .windGust(15.0)
+               .humidity(65.0)
+               .barometric(1013.0)
+               .battery(27.0);
+
 
         auto packet = FANET::Packet<1>()
                         .payload(payload)
