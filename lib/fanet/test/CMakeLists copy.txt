@@ -1,0 +1,131 @@
+cmake_minimum_required(VERSION 3.18)
+project(tests)
+include(FetchContent)
+
+message(STATUS "Building tests.")
+
+option(ENABLE_COVERAGE "Enable code coverage" OFF)
+
+add_definitions(-DCATCH_CONFIG_NO_POSIX_SIGNALS)
+add_definitions(-DUNIT_TESTING)
+add_definitions(-DOPENACE_MAXIMUM_TCP_CLIENTS=4)
+add_definitions(-DOPENACE_MAX_RADIOS=2)
+
+set(CMAKE_C_STANDARD 11)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_FLAGS "-O0 -coverage")
+
+#if(ENABLE_COVERAGE)
+  find_program(LCOV lcov REQUIRED)
+  find_program(GENHTML genhtml REQUIRED)
+#endif()
+
+# Work in progress
+#if(ENABLE_COVERAGE)
+# find_program(LCOV lcov REQUIRED)
+# find_program(GENHTML genhtml REQUIRED)
+
+# add_custom_target(coverage
+#   # Capture the initial coverage baseline (zero out counters)
+#   COMMAND ${LCOV} --ignore-errors source,inconsistent,format --directory . --capture --initial --output-file coverage_base.info
+
+#   COMMAND protocol_tests
+
+#   # Capture coverage data after tests
+#   COMMAND ${LCOV} --ignore-errors source,inconsistent,format --directory . --capture --output-file coverage.info 
+
+#   # Filter out system files and Catch2
+#   COMMAND ${LCOV} --ignore-errors source,inconsistent,format,unused --remove coverage.info '/usr/*' '/**/fanet_tests/**/*' '/**/vendor/**/*' '/**/catch2/**/*' --output-file coverage.filtered.info
+
+#   # Generate the HTML report
+#   COMMAND ${GENHTML} --ignore-errors inconsistent,corrupt,category coverage.filtered.info --out protocol
+
+#   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+#   COMMENT "Generating code coverage report.")
+#endif()
+
+
+# Pull in the Catch2 framework.
+FetchContent_Declare(
+  Catch2
+  GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+  GIT_TAG v3.5.1)
+FetchContent_MakeAvailable(Catch2)
+
+# Add vendor modules
+if(${CMAKE_SOURCE_DIR} STREQUAL ${PROJECT_SOURCE_DIR})
+  add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/../../../vendor/etl etlcpp)
+endif()
+
+# These examples use the standard separate compilation
+set(SOURCES_IDIOMATIC_EXAMPLES # Tests
+  # fanet_tests.cpp
+  # utils_tests.cpp
+  # packetParser_tests.cpp
+  # packet_tests.cpp
+  # tracking_tests.cpp
+  # message_tests.cpp
+  # name_tests.cpp
+  # groundTracking_tests.cpp
+   protocol_tests.cpp
+  # queue_tests.cpp
+   zone_tests.cpp
+)
+
+string(REPLACE ".cpp" "" BASENAMES_IDIOMATIC_EXAMPLES
+               "${SOURCES_IDIOMATIC_EXAMPLES}")
+set(TARGETS_IDIOMATIC_EXAMPLES ${BASENAMES_IDIOMATIC_EXAMPLES})
+
+
+#if(ENABLE_COVERAGE)
+  find_program(LCOV lcov REQUIRED)
+  find_program(GENHTML genhtml REQUIRED)
+
+  foreach(name ${TARGETS_IDIOMATIC_EXAMPLES})
+    add_executable(${name}  ${name}.cpp)
+
+    # Run test for each target
+    set(UNIT_TEST ${name})
+
+    add_custom_target(${name}_coverage
+    # Capture the initial coverage baseline (zero out counters)
+    COMMAND ${LCOV} --ignore-errors source,inconsistent,format,range --directory . --capture --initial --output-file ${name}_base.info
+
+    COMMAND ${UNIT_TEST}
+
+    # Capture coverage data after tests
+    COMMAND ${LCOV} --ignore-errors source,inconsistent,format,range --directory . --capture --output-file ${name}.info 
+
+    # Filter out system files and Catch2
+    COMMAND ${LCOV} --ignore-errors source,inconsistent,format,unused,range --remove ${name}.info '/usr/*' '/**/fanet_tests/**/*' '/**/vendor/**/*' '/**/catch2/**/*' --output-file ${name}.filtered.info
+
+    # Generate the HTML report
+    COMMAND ${GENHTML} --ignore-errors inconsistent,corrupt,category,range ${name}.filtered.info --out ${name}_coverage
+
+    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}
+    COMMENT "Generating code coverage report.")
+
+  # add_custom_command(
+  #   TARGET ${UNIT_TEST}
+  #   COMMENT "Run tests"
+  #   POST_BUILD
+  #   COMMAND ${UNIT_TEST})
+  endforeach()
+
+#endif()
+
+
+set(ALL_EXAMPLE_TARGETS ${TARGETS_IDIOMATIC_EXAMPLES})
+
+foreach(name ${ALL_EXAMPLE_TARGETS})
+  target_link_libraries(
+    ${name} Catch2WithMain
+    # core
+    etl)
+endforeach()
+
+
+list(APPEND CATCH_WARNING_TARGETS ${ALL_EXAMPLE_TARGETS})
+set(CATCH_WARNING_TARGETS
+    ${CATCH_WARNING_TARGETS}
+    PARENT_SCOPE)

@@ -1,0 +1,30 @@
+{
+  "name": "FANET Protocol implementation in c++",
+  "version": "0.0.1",
+  "authors": {
+    "name": "R. van Twisk",
+    "email": "github@rvt.dds.nl"
+  },
+  "homepage": "http://github.com/rvt/FANET",
+  "license": "MIT",
+  "description": "A header only c++ implementation of the FANET protocol",
+  "keywords": "FANET, c-plus-plus",
+  "repository": {
+    "type": "git",
+    "url": "http://github.com/rvt/FANET"
+  },
+  "build": {
+    "includeDir": "include"
+  },
+  "export": {
+    "include": [
+      "include",
+      "LICENSE",
+      "README.md"
+    ],
+    "exclude": [
+    ]
+  },
+  "platforms": "*",
+  "frameworks": "*"
+}
